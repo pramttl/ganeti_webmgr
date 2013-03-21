@@ -22,13 +22,15 @@ from object_permissions import get_users_any
 from ganeti_web.models import Cluster, ClusterUser, VirtualMachine
 
 
-def cluster_qs_for_user(user):
+def cluster_qs_for_user(user, **kwargs):
     if user.is_superuser:
         qs = Cluster.objects.all()
     elif user.is_anonymous():
         qs = Cluster.objects.none()
     else:
-        qs = user.get_objects_any_perms(Cluster, ['admin','create_vm'], False)
+        groups = kwargs.get('groups', True)
+        qs = user.get_objects_any_perms(Cluster, ['admin', 'create_vm'],
+                                        groups=groups, **kwargs)
 
     # Exclude all read-only clusters.
     qs = qs.exclude(Q(username='') | Q(mtime__isnull=True))
